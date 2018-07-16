@@ -1,0 +1,162 @@
+---
+title: "Word Cloud using R"
+author: "Kanksha Masrani"
+date: "14 July 2018"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+## Word Cloud 
+
+The simplest data visualization is a word cloud. It is one of the Text mining techniques used to visualize the most frequent occurring words in a given file (.csv/.text). The more frequent the word is used, the larger and bolder it is displayed.Text mining refers to the process of deriving high quality information from text.
+
+
+The aim of this article is to explain the concept of Word Cloud and understand how to actually create a Word Cloud using R. 
+
+##  1.	Choosing the Text File :
+
+Choose the text you wish to create a word cloud out of. For example here I am going to create a word cloud from the transcript of a House of Lords debate. Copy and paste the text into a plain text file (word.txt). You can also import a .csv file. 
+
+## 2.	Installing Packages:
+
+You will need to install and load the following packages. We will require four packages.
+
+a.	Tm- Text mining package 
+b.	SnowballC- Text stemming 
+c.	wordCloud- Wordcloud package 
+d.	RcolorBrewer- Color palettes for graphics 
+
+
+```{r,message=FALSE,warning=FALSE}
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+```
+
+## 3. Reading the file:
+
+Following are the command to read a text file or a csv file in R
+
+```{r,message=FALSE,warning=FALSE}
+speech ="C:\\Users\\Admin\\Desktop\\Word.txt"
+text  = readLines(speech)
+
+##speech ="C:\\Users\\Admin\\Desktop\\Word.csv"
+##text  = readLines(speech)
+```
+
+## 4. Converting the text/.csv file into a corpus: 
+
+Now in order to process or clean the text using tm package, you need to first convert this plain text data into a format called corpus which can then be processed by the tm package. 
+A corpus is a collection of documents (although in our case we only have one). 
+
+Following is the command to convert .txt file into a corpus.
+
+```{r,message=FALSE,warning=FALSE}
+docs <- Corpus(VectorSource(text))
+```
+
+## 5. Data Cleaning:
+
+Execute the following commands in RStudio:
+
+```{r,message=FALSE,warning=FALSE}
+inspect(docs)
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+docs <- tm_map(docs, toSpace, "/")
+docs <- tm_map(docs, toSpace, "@")
+docs <- tm_map(docs, toSpace, "\\|")
+# Convert the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Remove numbers
+docs <- tm_map(docs, removeNumbers)
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# Remove your own stop word
+# specify your stopwords as a character vector
+docs <- tm_map(docs, removeWords, c("blabla1", "blabla2")) 
+# Remove punctuations
+docs <- tm_map(docs, removePunctuation)
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+# Text stemming
+# docs <- tm_map(docs, stemDocument)
+
+#docs <- tm_mp(docs, removeWords,c("noble","lords"))
+
+```
+
+
+As you can see the commands above, use tm_map() from the tm package for processing your text. As the commands are quite obvious, they do the following:
+
+1. Removes unnecessary white space
+
+2. Converts everything to lower case (since tm package is case sensitive) 
+
+3. Removes English common words like 'the', 'I', 'Me' (so-called 'stopwords')
+
+4. You can also explicitly remove numbers and punctuation with the removeNumbers and   removePunctuation arguments.
+
+5. You can also make a list of words. C("noble", "lord", etc..), to remove them altogether.
+
+6. Performs text stemming which means that all the words are converted to their stem. 
+   (Ex: walked -> walk; talking -> talk). This helps us to ensure that all the words are        converted to the same form. 
+
+
+## 6. Creating a Document-term Matrix:
+
+It is a mathematical matrix that describes the frequency of terms that occur in a collection of documents. In a document-term matrix, rows correspond to words in the collection and columns correspond to documents.
+
+Now we can create a word cloud even without a DTM. But the advantage of using this here is to take a look at the frequency of words.
+
+
+```{r}
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 10)
+```
+
+
+## 7. Your First Word Cloud
+
+```{r}
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+          max.words=25, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+```
+
+Arguments of the word cloud generator function:
+
+1. words : the words to be plotted
+2. freq : their frequencies
+3. min.freq : words with frequency below min.freq will not be plotted
+4. max.words : maximum number of words to be plotted
+5. random.order : plot words in random order. If false, they will be plotted in decreasing  frequency
+6. rot.per : proportion words with 90 degree rotation (vertical text)
+7. colors : color words from least to most frequent. Use, for example, colors ="black" for single color.
+
+
+# Where are they most often used?
+
+a. Marketing: Word Cloud from all the customer reviews of a product. Helps you target profitable customers.
+b. Sentiment Analysis: Collect tweets or any data as a matter of fact and you can easily     perform sentimental analysis. 
+c. Distil big topics into bite-sized idea.  
+d. Summarizing any Poll taken:  If you're asking the audience to vote on, say, 50 items or   more, showing 50 bars stacked on one graph isn't the most. elegant solution. Word Cloud to the rescue!
+e. 	Share latest political Trends.
+f. 	Evaluating you brand Identity 
+
+# List of free word cloud generators 
+
+a. Tag crowd
+b. Make word mosaic
+c. Word sift
+d. Tagxedo
+e. Word clouds 
+f. Word it out
+g. Tableau
